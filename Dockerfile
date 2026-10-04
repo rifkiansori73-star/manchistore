@@ -28,8 +28,8 @@ ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -s 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -s 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
-# Install dependencies PHP via Composer (opsional tapi disarankan jika vendor tidak ikut di-copy)
-# RUN composer install --no-dev --optimize-autoloader
+# Install dependencies PHP via Composer agar folder vendor tergenerate otomatis
+RUN composer install --no-dev --optimize-autoloader
 
 # Berikan izin kepemilikan dan hak akses penuh ke folder storage & bootstrap/cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
