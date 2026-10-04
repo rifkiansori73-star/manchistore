@@ -28,12 +28,17 @@ ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -s 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -s 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
-# Install dependencies PHP via Composer agar folder vendor tergenerate otomatis
+# Install dependencies PHP via Composer
 RUN composer install --no-dev --optimize-autoloader
 
 # Berikan izin kepemilikan dan hak akses penuh ke folder storage & bootstrap/cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Generate key dan cache configuration agar tidak error 500
+RUN php artisan key:generate --force || true
+RUN php artisan config:clear || true
+RUN php artisan cache:clear || true
 
 # Port default web server
 EXPOSE 80
