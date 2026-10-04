@@ -28,7 +28,7 @@ ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -s 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -s 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
-# Buat folder storage & cache secara eksplisit jika belum ada, lalu set kepemilikan dan izin aksesnya
+# Buat folder storage & cache secara eksplisit, lalu set kepemilikan dan izin aksesnya
 RUN mkdir -p /var/www/html/storage/framework/sessions \
     && mkdir -p /var/www/html/storage/framework/views \
     && mkdir -p /var/www/html/storage/framework/cache \
@@ -39,12 +39,8 @@ RUN mkdir -p /var/www/html/storage/framework/sessions \
 # Install dependencies PHP via Composer
 RUN composer install --no-dev --optimize-autoloader
 
-# Salin file .env dari Secret Files Render ke root project (jika tersedia)
-RUN if [ -f /etc/secrets/.env ]; then cp /etc/secrets/.env /var/www/html/.env; fi
-
-# Pastikan file .env (jika ada) dan seluruh storage/cache memiliki izin akses yang tepat untuk www-data
-RUN if [ -f /var/www/html/.env ]; then chown www-data:www-data /var/www/html/.env && chmod 664 /var/www/html/.env; fi \
-    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+# Berikan izin ulang untuk keamanan folder storage
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Generate key dan bersihkan cache konfigurasi
