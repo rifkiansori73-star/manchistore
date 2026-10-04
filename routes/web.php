@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 
 // Import Controller Public & Utama
 use App\Http\Controllers\HomeController;
@@ -16,9 +14,6 @@ use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\JokiRateController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\AccountController as AdminAccountController;
-
-// Import Model User
-use App\Models\User;
 
 /*
 |--------------------------------------------------------------------------
@@ -85,27 +80,4 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 
     Route::post('/accounts/{id}/toggle', [AdminAccountController::class, 'toggleFeatured'])->name('admin.accounts.toggle');
 
-});
-
-
-/*
-|--------------------------------------------------------------------------
-| RUTE HOTFIX (UNTUK MENAMBAH KOLOM & JADIKAN ADMIN)
-|--------------------------------------------------------------------------
-*/
-Route::get('/paksa-jadi-admin', function () {
-    if (!Schema::hasColumn('users', 'is_admin')) {
-        Schema::table('users', function (Blueprint $table) {
-            $table->tinyInteger('is_admin')->default(0)->after('email');
-        });
-    }
-
-    $user = User::where('email', 'admin@manchistore.com')->first();
-    if ($user) {
-        $user->is_admin = 1;
-        $user->save();
-        return "BERHASIL! Kolom is_admin dibuat dan akun admin@manchistore.com sudah resmi jadi admin.";
-    }
-    
-    return "Kolom is_admin berhasil dibuat, tapi user belum ada. Silakan register dulu lewat halaman login.";
 });
