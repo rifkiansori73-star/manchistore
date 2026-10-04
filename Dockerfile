@@ -38,8 +38,9 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 # Salin file .env dari Secret Files Render ke root project
 RUN if [ -f /etc/secrets/.env ]; then cp /etc/secrets/.env /var/www/html/.env; fi
 
-# Berikan izin ulang setelah .env disalin agar aman
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+# Berikan izin ke file .env serta folder storage & bootstrap/cache agar bisa dibaca web server
+RUN chown www-data:www-data /var/www/html/.env && chmod 664 /var/www/html/.env \
+    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Generate key dan bersihkan cache konfigurasi
