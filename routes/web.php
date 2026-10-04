@@ -11,7 +11,7 @@ use App\Http\Controllers\CheckoutController;
 // Import Controller Autentikasi & Admin
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\OrderController;
-use App\Http\Controllers\Admin\JokiRateController;
+use App\Http\Controllers\Admin\RankRateController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\AccountController as AdminAccountController;
 
@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\AccountController as AdminAccountController;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/akun', [AccountController::class, 'index'])->name('akun.index');
 
+// DISESUAIKAN: Rute detail akun publik diarahkan ke AccountController agar cocok dengan method show($identifier)
 Route::get('/akun/{identifier}', [AccountController::class, 'show'])->name('akun.show');
 
 Route::get('/joki/order', [JokiController::class, 'orderForm'])->name('joki.order');
@@ -34,8 +35,12 @@ Route::post('/checkout/order', [CheckoutController::class, 'storeOrder'])->name(
 | 2. AREA AUTENTIKASI (Login & Logout)
 |--------------------------------------------------------------------------
 */
+// Rute login menggunakan middleware 'guest' bawaan Laravel
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login')->middleware('guest');
+
+// DITAMBAHKAN THROTTLE DI SINI (Maksimal 5 kali salah login dalam 1 menit)
 Route::post('/login', [LoginController::class, 'login'])->name('login.post')->middleware('throttle:5,1');
+
 Route::match(['get', 'post'], '/logout', [LoginController::class, 'logout'])->name('logout');
 
 
@@ -53,12 +58,12 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/orders', [OrderController::class, 'index'])->name('admin.orders.index');
     Route::post('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('admin.orders.updateStatus');
     
-    // 2. Kelola Tarif Joki
-    Route::get('/joki-rates', [JokiRateController::class, 'index'])->name('admin.joki.index');
-    Route::post('/joki-rates', [JokiRateController::class, 'store'])->name('admin.joki.store');
-    Route::post('/joki-rates/update', [JokiRateController::class, 'update'])->name('admin.joki.update');
-    Route::delete('/joki-rates/{id}', [JokiRateController::class, 'destroy'])->name('admin.joki.destroy');
-    Route::post('/joki-rates/seed', [JokiRateController::class, 'seedDefault'])->name('admin.joki.seed');
+    // 2. Kelola Tarif Joki (Menggunakan RankRateController)
+    Route::get('/joki-rates', [RankRateController::class, 'index'])->name('admin.joki.index');
+    Route::post('/joki-rates', [RankRateController::class, 'store'])->name('admin.joki.store');
+    Route::post('/joki-rates/update', [RankRateController::class, 'update'])->name('admin.joki.update');
+    Route::delete('/joki-rates/{id}', [RankRateController::class, 'destroy'])->name('admin.joki.destroy');
+    Route::post('/joki-rates/seed', [RankRateController::class, 'seedDefault'])->name('admin.joki.seed');
 
     // 3. Web Settings - Setting Kontak & WA Admin
     Route::get('/settings', [SettingController::class, 'kontakIndex'])->name('admin.settings.index');

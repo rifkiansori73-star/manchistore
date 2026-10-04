@@ -21,5 +21,10 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+
+        // Memanggil seeder harga joki rank
+        $this->call([
+            RankRateSeeder::class,
+        ]);
     }
 }

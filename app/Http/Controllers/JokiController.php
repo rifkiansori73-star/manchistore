@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\JokiRate;
+use App\Models\RankRate; // Disesuaikan menggunakan RankRate
 
 class JokiController extends Controller
 {
@@ -11,8 +11,8 @@ class JokiController extends Controller
     {
         $type = $request->query('type', 'biasa'); // Default 'biasa'
 
-        // Ambil data tarif joki sesuai type dari database
-        $ratesFromDb = JokiRate::where('type', $type)->pluck('price_per_star', 'rank_name')->toArray();
+        // Ambil data tarif joki dari database berdasarkan model RankRate
+        $ratesFromDb = RankRate::pluck('price', 'rank_name')->toArray();
 
         // Fallback default tarif jika database belum terisi
         $defaultRates = [
@@ -28,7 +28,7 @@ class JokiController extends Controller
             'Mythic Immortal' => 18000,
         ];
 
-        // Gabungkan tarif DB dan fallback
+        // Gabungkan tarif DB dan fallback (prioritas data dari database)
         $rankRates = array_merge($defaultRates, $ratesFromDb);
 
         return view('joki.order', compact('type', 'rankRates'));

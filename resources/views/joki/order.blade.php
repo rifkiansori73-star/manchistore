@@ -214,7 +214,7 @@
 </div>
 
 <script>
-    // Data rate per bintang dari Database
+    // Data rate per bintang dari Database (disinkronkan dengan key database)
     const dbRates = @json($rankRates);
 
     // Konfigurasi Rentang Bintang / Point per Tier & Offset Kumulatif Total
@@ -246,7 +246,7 @@
 
         'Legend V':   { minStars: 1, maxStars: 5, offset: 87,  mainRank: 'Legend' },
         'Legend IV':  { minStars: 1, maxStars: 5, offset: 92,  mainRank: 'Legend' },
-        'Legend III': { minStars: 1, maxStars: 5, offset: 97,  mainRank: 'Legend' },
+        'Legend III': { minStars: 1, maxSatrs: 5, offset: 97,  mainRank: 'Legend' },
         'Legend II':  { minStars: 1, maxStars: 5, offset: 102, mainRank: 'Legend' },
         'Legend I':   { minStars: 1, maxStars: 5, offset: 107, mainRank: 'Legend' },
 
@@ -274,7 +274,8 @@
             let optionsHTML = '';
 
             for (let i = config.minStars; i <= config.maxStars; i++) {
-                optionsHTML += `<option value="${i}">${i} ${unit}</option>`;
+                // Format diubah menjadi: Bintang 1, Point 1, dst.
+                optionsHTML += `<option value="${i}">${unit} ${i}</option>`;
             }
 
             container.innerHTML = `
@@ -286,16 +287,17 @@
     }
 
     function getPriceForCumulativeStar(starIndex) {
-        if (starIndex < 9)   return dbRates['Warrior']         || 1000;
-        if (starIndex < 21)  return dbRates['Elite']           || 1500;
-        if (starIndex < 37)  return dbRates['Master']          || 2000;
-        if (starIndex < 62)  return dbRates['Grandmaster']     || 3000;
-        if (starIndex < 87)  return dbRates['Epic']            || 4000;
-        if (starIndex < 112) return dbRates['Legend']          || 5000;
-        if (starIndex < 136) return dbRates['Mythic']          || 8000;
-        if (starIndex < 161) return dbRates['Mythic Honor']    || 10000;
-        if (starIndex < 212) return dbRates['Mythic Glory']    || 13000;
-        return dbRates['Mythic Immortal'] || 18000;
+        // Mengambil langsung dari variabel dbRates yang dikirim controller, dengan fallback aman
+        if (starIndex < 9)   return dbRates['Warrior']         ?? dbRates['Warrior III']         ?? 1000;
+        if (starIndex < 21)  return dbRates['Elite']           ?? dbRates['Elite III']           ?? 1500;
+        if (starIndex < 37)  return dbRates['Master']          ?? dbRates['Master IV']           ?? 2000;
+        if (starIndex < 62)  return dbRates['Grandmaster']     ?? dbRates['Grandmaster V']       ?? 3000;
+        if (starIndex < 87)  return dbRates['Epic']            ?? dbRates['Epic V']              ?? 4000;
+        if (starIndex < 112) return dbRates['Legend']          ?? dbRates['Legend V']            ?? 5000;
+        if (starIndex < 136) return dbRates['Mythic']          ?? 8000;
+        if (starIndex < 161) return dbRates['Mythic Honor']    ?? 10000;
+        if (starIndex < 212) return dbRates['Mythic Glory']    ?? 13000;
+        return dbRates['Mythic Immortal'] ?? 18000;
     }
 
     function calculatePrice() {
@@ -310,6 +312,8 @@
 
         let configAwal = tierConfig[rankAwal];
         let configTujuan = tierConfig[rankTujuan];
+
+        if (!configAwal || !configTujuan) return 0;
 
         let startCumulative = 0;
         if (configAwal.mainRank.includes('Mythic')) {
@@ -368,7 +372,6 @@
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Memproses Pesanan...';
 
         try {
-            // Kirim AJAX Fetch ke Backend Laravel
             let response = await fetch("{{ route('checkout.order') }}", {
                 method: "POST",
                 headers: {
@@ -393,8 +396,6 @@
             let result = await response.json();
 
             if (response.ok && result.wa_url) {
-                // 1. Tersimpan di DB Sukses!
-                // 2. Langsung Dialihkan ke WhatsApp
                 window.location.href = result.wa_url;
             } else {
                 alert('Gagal memproses pesanan: ' + (result.message || 'Silakan cek kembali inputan Anda.'));
