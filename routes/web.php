@@ -15,27 +15,6 @@ use App\Http\Controllers\Admin\JokiRateController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\AccountController as AdminAccountController;
 
-// Import Model User untuk route pembuatan admin kilat
-use App\Models\User;
-
-/*
-|--------------------------------------------------------------------------
-| ROUTE KILAT PEMBUATAN AKUN ADMIN (Sementara)
-|--------------------------------------------------------------------------
-*/
-Route::get('/buat-admin-kilat', function () {
-    User::updateOrCreate(
-        ['email' => 'admin@manchistore.com'],
-        [
-            'name' => 'Admin ManChi',
-            'password' => bcrypt('password123'),
-            'is_admin' => 1
-        ]
-    );
-    return "Akun admin berhasil dibuat di database online! Silakan hapus rute ini kembali.";
-});
-
-
 /*
 |--------------------------------------------------------------------------
 | 1. AREA PUBLIC (Bisa diakses siapa saja)
