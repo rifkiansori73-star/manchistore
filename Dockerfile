@@ -14,6 +14,14 @@ RUN apt-get update && apt-get install -y \
 # Aktifkan mod_rewrite Apache
 RUN a2enmod rewrite
 
+# Izinkan .htaccess override di direktori web root agar routing Laravel berfungsi
+RUN echo '<Directory /var/www/html/public>\n\
+    Options Indexes FollowSymLinks\n\
+    AllowOverride All\n\
+    Require all granted\n\
+</Directory>' > /etc/apache2/conf-available/laravel.conf \
+    && a2enconf laravel
+
 # Install Composer terbaru
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -28,23 +36,23 @@ ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -s 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -s 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
-# Buat folder storage & cache secara eksplisit, lalu set kepemilikan dan izin aksesnya
+# Buat folder storage & log secara eksplisit dan berikan izin akses penuh ke www-data
 RUN mkdir -p /var/www/html/storage/framework/sessions \
     && mkdir -p /var/www/html/storage/framework/views \
     && mkdir -p /var/www/html/storage/framework/cache \
     && mkdir -p /var/www/html/storage/logs \
+    && touch /var/www/html/storage/logs/laravel.log \
     && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Install dependencies PHP via Composer
 RUN composer install --no-dev --optimize-autoloader
 
-# Berikan izin ulang untuk keamanan folder storage
+# Pastikan ulang hak akses folder storage aman setelah composer install
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Generate key dan bersihkan cache konfigurasi
-RUN php artisan key:generate --force || true
+# Bersihkan cache konfigurasi
 RUN php artisan config:clear || true
 RUN php artisan cache:clear || true
 
