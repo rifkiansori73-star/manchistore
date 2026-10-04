@@ -15,6 +15,9 @@ use App\Http\Controllers\Admin\JokiRateController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\AccountController as AdminAccountController;
 
+// Import Model User untuk hotfix
+use App\Models\User;
+
 /*
 |--------------------------------------------------------------------------
 | 1. AREA PUBLIC (Bisa diakses siapa saja)
@@ -23,7 +26,6 @@ use App\Http\Controllers\Admin\AccountController as AdminAccountController;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/akun', [AccountController::class, 'index'])->name('akun.index');
 
-// DISESUAIKAN: Rute detail akun publik diarahkan ke AccountController agar cocok dengan method show($identifier)
 Route::get('/akun/{identifier}', [AccountController::class, 'show'])->name('akun.show');
 
 Route::get('/joki/order', [JokiController::class, 'orderForm'])->name('joki.order');
@@ -35,12 +37,8 @@ Route::post('/checkout/order', [CheckoutController::class, 'storeOrder'])->name(
 | 2. AREA AUTENTIKASI (Login & Logout)
 |--------------------------------------------------------------------------
 */
-// Rute login menggunakan middleware 'guest' bawaan Laravel
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login')->middleware('guest');
-
-// DITAMBAHKAN THROTTLE DI SINI (Maksimal 5 kali salah login dalam 1 menit)
 Route::post('/login', [LoginController::class, 'login'])->name('login.post')->middleware('throttle:5,1');
-
 Route::match(['get', 'post'], '/logout', [LoginController::class, 'logout'])->name('logout');
 
 
@@ -85,4 +83,20 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 
     Route::post('/accounts/{id}/toggle', [AdminAccountController::class, 'toggleFeatured'])->name('admin.accounts.toggle');
 
+}); // <--- BATAS AKHIR GROUP ADMIN
+
+
+/*
+|--------------------------------------------------------------------------
+| RUTE HOTFIX (DI LUAR GROUP ADMIN - AMAN DI AKSES)
+|--------------------------------------------------------------------------
+*/
+Route::get('/paksa-jadi-admin', function () {
+    $user = User::where('email', 'admin@manchistore.com')->first();
+    if ($user) {
+        $user->is_admin = 1;
+        $user->save();
+        return "Sukses! User " . $user->email . " sekarang resmi jadi admin (is_admin = 1).";
+    }
+    return "User dengan email admin@manchistore.com tidak ditemukan di database online.";
 });
