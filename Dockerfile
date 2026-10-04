@@ -28,18 +28,22 @@ ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -s 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -s 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
+# Buat folder storage & cache secara eksplisit jika belum ada, lalu set kepemilikan dan izin aksesnya
+RUN mkdir -p /var/www/html/storage/framework/sessions \
+    && mkdir -p /var/www/html/storage/framework/views \
+    && mkdir -p /var/www/html/storage/framework/cache \
+    && mkdir -p /var/www/html/storage/logs \
+    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
 # Install dependencies PHP via Composer
 RUN composer install --no-dev --optimize-autoloader
 
-# Berikan izin awal ke folder storage & bootstrap/cache
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
-
-# Salin file .env dari Secret Files Render ke root project
+# Salin file .env dari Secret Files Render ke root project (jika tersedia)
 RUN if [ -f /etc/secrets/.env ]; then cp /etc/secrets/.env /var/www/html/.env; fi
 
-# Berikan izin ke file .env serta folder storage & bootstrap/cache agar bisa dibaca web server
-RUN chown www-data:www-data /var/www/html/.env && chmod 664 /var/www/html/.env \
+# Pastikan file .env (jika ada) dan seluruh storage/cache memiliki izin akses yang tepat untuk www-data
+RUN if [ -f /var/www/html/.env ]; then chown www-data:www-data /var/www/html/.env && chmod 664 /var/www/html/.env; fi \
     && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
