@@ -31,14 +31,18 @@ RUN sed -ri -s 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 # Install dependencies PHP via Composer
 RUN composer install --no-dev --optimize-autoloader
 
-# Berikan izin kepemilikan dan hak akses penuh ke folder storage & bootstrap/cache
+# Berikan izin awal ke folder storage & bootstrap/cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Salin file .env dari Secret Files Render ke root project sebelum di-cache
+# Salin file .env dari Secret Files Render ke root project
 RUN if [ -f /etc/secrets/.env ]; then cp /etc/secrets/.env /var/www/html/.env; fi
 
-# Generate key dan cache configuration agar tidak error 500
+# Berikan izin ulang setelah .env disalin agar aman
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Generate key dan bersihkan cache konfigurasi
 RUN php artisan key:generate --force || true
 RUN php artisan config:clear || true
 RUN php artisan cache:clear || true
